@@ -80,11 +80,13 @@ CREATE TABLE IF NOT EXISTS messages (
 CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT, -- Recipient
+    application_id INT, -- Link to specific application (optional)
     title VARCHAR(255),
     message TEXT,
     type VARCHAR(50) DEFAULT 'general', -- 'mid_priority' (health/new_pet) or 'high_priority' (app_update)
     scheduled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Visible only after this time
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE
 );

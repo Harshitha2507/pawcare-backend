@@ -25,13 +25,13 @@ def get_notifications():
     cursor.execute(query, (user_id,))
     notifications = cursor.fetchall()
     
-    # 🔧 FIX: Serialize datetime objects for JSON
     for n in notifications:
         if n.get('created_at'):
             n['created_at'] = str(n['created_at'])
         if n.get('scheduled_at'):
             n['scheduled_at'] = str(n['scheduled_at'])
-
+        # application_id is already included because of SELECT *
+    
     cursor.close()
     conn.close()
     return jsonify(notifications)
@@ -45,6 +45,24 @@ def mark_as_read(notif_id):
     cursor.close()
     conn.close()
     return jsonify({"message": "Marked as read"})
+
+@notifications_bp.route('/read-all/', methods=['POST'])
+def mark_all_as_read():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE notifications SET is_read = TRUE WHERE user_id = %s OR user_id IS NULL", (user_id,))
+        conn.commit()
+        return jsonify({"message": "All notifications marked as read", "success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 @notifications_bp.route('/', methods=['POST'])
 def add_notification():
