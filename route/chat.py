@@ -181,15 +181,20 @@ def send_message(current_user_id):
                 "receiver_id": receiver_id,
                 "message": text,
                 "text": text,
-                "timestamp": datetime.datetime.now().isoformat()
+                "timestamp": datetime.datetime.now().isoformat(),
+                "is_real_time": True
             }
             # Broadcast to chat room (for both users currently in the chat)
-            socketio.emit('receive_message', payload, room=str(chat_id), namespace='/')
-            # Also notify the receiver's personal room (so their chat list refreshes)
-            socketio.emit('new_message_notification', payload, room=f"user_{receiver_id}", namespace='/')
-            print(f"📡 API Broadcast: message {message_id} to room {chat_id} and user_{receiver_id}")
+            room_name = str(chat_id)
+            socketio.emit('receive_message', payload, room=room_name)
+            
+            # Also notify the receiver's personal room (for chat list refresh)
+            user_room = f"user_{receiver_id}"
+            socketio.emit('new_message_notification', payload, room=user_room)
+            
+            print(f"🚀 [BROADCAST] Sent message {message_id} to room {room_name} and {user_room}")
         except Exception as e:
-            print(f"⚠️ Socket broadcast failed: {e}")
+            print(f"⚠️ [BROADCAST] Socket failed: {e}")
         
         return jsonify({"message": "Message sent successfully", "chat_id": chat_id, "id": message_id}), 201
     except Exception as e:

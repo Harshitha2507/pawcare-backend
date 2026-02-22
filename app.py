@@ -38,20 +38,19 @@ def on_join(data):
     if chat_id:
         room = str(chat_id)
         join_room(room)
-        print(f"👤 User joined chat room: {room}")
+        print(f"📡 [SOCKET] USER JOINED CHAT ROOM: {room}")
     else:
-        print("⚠️ Join attempt without chat_id or room_id")
+        print("⚠️ [SOCKET] Join attempt FAILED: No chat_id provided")
 
 @socketio.on('join_user_room')
 def on_join_user_room(data):
-    """Each user joins their own personal room for cross-chat notifications."""
     user_id = data.get('user_id') or data.get('id')
     if user_id:
         user_room = f"user_{user_id}"
         join_room(user_room)
-        print(f"👤 User {user_id} joined personal room: {user_room}")
+        print(f"👤 [SOCKET] USER {user_id} JOINED PERSONAL ROOM: {user_room}")
     else:
-        print("⚠️ Join user room attempt without user_id")
+        print("⚠️ [SOCKET] Join user room FAILED: No user_id provided")
 
 @socketio.on('send_message')
 def handle_message(data):
