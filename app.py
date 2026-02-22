@@ -1,4 +1,7 @@
 # app.py
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room
@@ -13,7 +16,7 @@ from extensions import socketio
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
-socketio.init_app(app, cors_allowed_origins="*")
+socketio.init_app(app, cors_allowed_origins="*", async_mode='eventlet')
 
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/auth')
