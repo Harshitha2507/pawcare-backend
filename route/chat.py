@@ -172,7 +172,7 @@ def send_message(current_user_id):
         
         # 🟢 Real-time Broadcast via SocketIO
         try:
-            from app import socketio
+            from extensions import socketio
             import datetime
             payload = {
                 "id": message_id,

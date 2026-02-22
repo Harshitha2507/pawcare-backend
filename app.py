@@ -9,10 +9,11 @@ from route.chat import chat_bp
 from route.applications import applications_bp
 from route.notifications import notifications_bp
 from models import get_db_connection
+from extensions import socketio
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio.init_app(app, cors_allowed_origins="*")
 
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/auth')
