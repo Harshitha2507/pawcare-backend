@@ -91,7 +91,9 @@ def add_pet():
     if request.content_type.startswith('multipart/form-data'):
         data = request.form
         file = request.files.get('image')
-        
+        # Save file if exists
+        image_url = "https://images.unsplash.com/photo-1543466835-00a7907e9de1" # Default
+        if file:
             # ☁️ CLOUDINARY UPLOAD (Permanent)
             try:
                 upload_result = cloudinary.uploader.upload(file)
