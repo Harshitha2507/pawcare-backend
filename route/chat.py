@@ -74,11 +74,12 @@ def get_chat_messages(current_user_id, chat_id):
         )
         messages = cursor.fetchall()
         
-        # 🔧 FIX: Serialize datetime objects for JSON
+        # 🔧 FIX: Serialize datetime objects for JSON in UTC ISO format
         for msg in messages:
             if msg.get('created_at'):
-                msg['timestamp'] = str(msg['created_at'])
-                msg['created_at'] = str(msg['created_at'])
+                # Ensure it's treated as UTC for the frontend to convert
+                msg['timestamp'] = msg['created_at'].isoformat() + "Z" if hasattr(msg['created_at'], 'isoformat') else str(msg['created_at']) + "Z"
+                msg['created_at'] = msg['timestamp']
         
         return jsonify(messages)
     except Exception as e:
@@ -182,7 +183,7 @@ def send_message(current_user_id):
                 "receiver_id": receiver_id,
                 "message": text,
                 "text": text,
-                "timestamp": datetime.datetime.now().isoformat(),
+                "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
                 "is_real_time": True
             }
             # Broadcast to chat room (for both users currently in the chat)

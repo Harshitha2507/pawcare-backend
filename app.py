@@ -79,7 +79,7 @@ def handle_message(data):
         conn.close()
 
         import datetime
-        timestamp_iso = datetime.datetime.now().isoformat()
+        timestamp_iso = datetime.datetime.utcnow().isoformat() + "Z"
         
         payload = {
             "id": message_id,
