@@ -16,7 +16,8 @@ from extensions import socketio
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
-socketio.init_app(app, cors_allowed_origins="*", async_mode='eventlet')
+# allow_eio3=True is CRITICAL for compatibility with flutter socket_io_client 2.x
+socketio.init_app(app, cors_allowed_origins="*", async_mode='eventlet', logger=True, engineio_logger=True, allow_eio3=True)
 
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/auth')

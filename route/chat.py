@@ -186,13 +186,13 @@ def send_message(current_user_id):
             }
             # Broadcast to chat room (for both users currently in the chat)
             room_name = str(chat_id)
-            socketio.emit('receive_message', payload, room=room_name)
+            socketio.emit('receive_message', payload, room=room_name, namespace='/')
             
             # Also notify the receiver's personal room (for chat list refresh)
             user_room = f"user_{receiver_id}"
-            socketio.emit('new_message_notification', payload, room=user_room)
+            socketio.emit('new_message_notification', payload, room=user_room, namespace='/')
             
-            print(f"🚀 [BROADCAST] Sent message {message_id} to room {room_name} and {user_room}")
+            print(f"🚀 [BROADCAST] Sent message {message_id} to room {room_name} and {user_room} (namespace: /)")
         except Exception as e:
             print(f"⚠️ [BROADCAST] Socket failed: {e}")
         
