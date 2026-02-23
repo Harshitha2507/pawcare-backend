@@ -35,14 +35,15 @@ def get_user_chats(current_user_id):
                u.id as other_user_id, u.name as other_user_name,
                p.name as pet_name, p.image as pet_image,
                (SELECT message FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) as last_text,
-               (SELECT created_at FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) as last_time
+               (SELECT created_at FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) as last_time,
+               (SELECT COUNT(*) FROM messages WHERE chat_id = c.id AND receiver_id = %s AND is_read = FALSE) as unread_count
         FROM chats c
         JOIN users u ON (c.user1_id = %s AND u.id = c.user2_id) OR (c.user2_id = %s AND u.id = c.user1_id)
         LEFT JOIN pets p ON c.pet_id = p.id
         WHERE c.user1_id = %s OR c.user2_id = %s
         ORDER BY last_time DESC
     """
-    cursor.execute(query, (current_user_id, current_user_id, current_user_id, current_user_id))
+    cursor.execute(query, (current_user_id, current_user_id, current_user_id, current_user_id, current_user_id))
     chats = cursor.fetchall()
     
     # 🔧 FIX: Serialize datetime objects for JSON
@@ -53,6 +54,24 @@ def get_user_chats(current_user_id):
     cursor.close()
     conn.close()
     return jsonify(chats)
+
+@chat_bp.route('/mark-read/<int:chat_id>', methods=['POST'])
+@token_required
+def mark_chat_as_read(current_user_id, chat_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "UPDATE messages SET is_read = TRUE WHERE chat_id = %s AND receiver_id = %s",
+            (chat_id, current_user_id)
+        )
+        conn.commit()
+        return jsonify({"success": True, "message": "Messages marked as read"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 @chat_bp.route('/get-messages/<int:chat_id>', methods=['GET'])
 @token_required
