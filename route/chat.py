@@ -34,8 +34,8 @@ def get_user_chats(current_user_id):
         SELECT c.id as chat_id, c.pet_id,
                u.id as other_user_id, u.name as other_user_name,
                p.name as pet_name, p.image as pet_image,
-               (SELECT message FROM messages WHERE chat_id = c.id ORDER BY timestamp DESC LIMIT 1) as last_text,
-               (SELECT timestamp FROM messages WHERE chat_id = c.id ORDER BY timestamp DESC LIMIT 1) as last_time
+               (SELECT message FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) as last_text,
+               (SELECT created_at FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) as last_time
         FROM chats c
         JOIN users u ON (c.user1_id = %s AND u.id = c.user2_id) OR (c.user2_id = %s AND u.id = c.user1_id)
         LEFT JOIN pets p ON c.pet_id = p.id
@@ -67,17 +67,18 @@ def get_chat_messages(current_user_id, chat_id):
         if not chat or (chat['user1_id'] != current_user_id and chat['user2_id'] != current_user_id):
             return jsonify({"error": "Unauthorized"}), 403
 
-        # 4️⃣ Load messages ordered by timestamp ASC
+        # 4️⃣ Load messages ordered by created_at ASC
         cursor.execute(
-            "SELECT * FROM messages WHERE chat_id = %s ORDER BY timestamp ASC",
+            "SELECT * FROM messages WHERE chat_id = %s ORDER BY created_at ASC",
             (chat_id,)
         )
         messages = cursor.fetchall()
         
         # 🔧 FIX: Serialize datetime objects for JSON
         for msg in messages:
-            if msg.get('timestamp'):
-                msg['timestamp'] = str(msg['timestamp'])
+            if msg.get('created_at'):
+                msg['timestamp'] = str(msg['created_at'])
+                msg['created_at'] = str(msg['created_at'])
         
         return jsonify(messages)
     except Exception as e:
