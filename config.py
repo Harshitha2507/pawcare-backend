@@ -5,6 +5,7 @@ MYSQL_USER = "avnadmin"
 MYSQL_PASSWORD = "AVNS_x9qvNaR5ZqvGEJvFlks"
 MYSQL_DB = "defaultdb"
 MYSQL_PORT = 18200
+MYSQL_SSL_CA = "ca.pem"
 SECRET_KEY = "pawcare_secret_key_change_me"
 
 # Cloudinary Config (Updated for permanent image storage)

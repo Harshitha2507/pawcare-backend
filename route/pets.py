@@ -87,29 +87,37 @@ import time
 
 @pets_bp.route('/', methods=['POST'])
 def add_pet():
+    print("📡 [DEBUG] Received add_pet request")
     # Handle both JSON and Form Data (for files)
-    if request.content_type.startswith('multipart/form-data'):
-        data = request.form
-        file = request.files.get('image')
-        # Save file if exists
-        image_url = "https://images.unsplash.com/photo-1543466835-00a7907e9de1" # Default
-        if file:
-            # ☁️ CLOUDINARY UPLOAD (Permanent)
-            try:
-                upload_result = cloudinary.uploader.upload(file)
-                image_url = upload_result.get("secure_url")
-                print(f"✅ Cloudinary upload success: {image_url}")
-            except Exception as ce:
-                print(f"⚠️ Cloudinary failed: {ce}. Falling back to local storage.")
-                filename = f"{int(time.time())}_{file.filename}"
-                upload_path = os.path.join('static', 'uploads', filename)
-                os.makedirs(os.path.dirname(upload_path), exist_ok=True)
-                file.save(upload_path)
-                image_url = f"{request.host_url}static/uploads/{filename}"
-    else:
-        # Fallback to JSON
-        data = request.json
-        image_url = data.get("image")
+    try:
+        if request.content_type and request.content_type.startswith('multipart/form-data'):
+            data = request.form
+            file = request.files.get('image')
+            print(f"📁 [DEBUG] Form data received: {data.to_dict()}")
+            # Save file if exists
+            image_url = "https://images.unsplash.com/photo-1543466835-00a7907e9de1" # Default
+            if file:
+                print(f"☁️ [DEBUG] Attempting Cloudinary upload for: {file.filename}")
+                # ☁️ CLOUDINARY UPLOAD (Permanent)
+                try:
+                    upload_result = cloudinary.uploader.upload(file)
+                    image_url = upload_result.get("secure_url")
+                    print(f"✅ Cloudinary upload success: {image_url}")
+                except Exception as ce:
+                    print(f"⚠️ Cloudinary failed: {ce}. Falling back to local storage.")
+                    filename = f"{int(time.time())}_{file.filename}"
+                    upload_path = os.path.join('static', 'uploads', filename)
+                    os.makedirs(os.path.dirname(upload_path), exist_ok=True)
+                    file.save(upload_path)
+                    image_url = f"{request.host_url}static/uploads/{filename}"
+        else:
+            # Fallback to JSON
+            data = request.json
+            print(f"📄 [DEBUG] JSON data received: {data}")
+            image_url = data.get("image")
+    except Exception as e:
+        print(f"❌ Error parsing request data: {e}")
+        return jsonify({"error": f"Request parsing failed: {e}"}), 400
 
     name = data.get("name")
     category = data.get("category")
@@ -133,39 +141,52 @@ def add_pet():
         adoption_fee = int(adoption_fee_raw) if adoption_fee_raw else 0
     except:
         adoption_fee = 0
+    
+    print(f"📝 [DEBUG] Preparing to insert pet: {name}, lender: {lender_id}, fee: {adoption_fee}")
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        print("🗄️ [DEBUG] Database connection successful")
+    except Exception as e:
+        print(f"❌ DATABASE CONNECTION ERROR: {e}")
+        return jsonify({"error": f"Database connection failed: {e}"}), 500
+
     import json
     try:
         # 🔄 Handle album (list to string)
         album_data = data.get("album")
         album_str = json.dumps(album_data) if isinstance(album_data, list) else None
 
+        print("🔮 [DEBUG] Executing INSERT into pets")
         cursor.execute(
             "INSERT INTO pets (name, category, breed, image, album, location, age, sex, color, health_status, description, lender_id, adoption_fee) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (name, category, breed, image_url, album_str, location, age, sex, color, health_status, description, lender_id, adoption_fee)
         )
         conn.commit()
+        print("✅ [DEBUG] Pet inserted successfully")
 
         # 🔔 Global Notification for New Pet
         try:
+            print("🔔 [DEBUG] Creating global notification")
             cursor.execute(
                 "INSERT INTO notifications (user_id, title, message, type) VALUES (NULL, %s, %s, 'new_pet')",
                 ("New Pet Alert!", f"A new {category} named {name} just joined PawCare!")
             )
             conn.commit()
+            print("✅ [DEBUG] Notification created successfully")
         except Exception as ne:
             print(f"⚠️ Warning: Could not create global notification: {ne}")
 
         return jsonify({"message": "Pet added successfully", "image_url": image_url})
     except Exception as e:
-        conn.rollback()
-        print(f"❌ DB ERROR: {e}")
-        return jsonify({"error": str(e)}), 500
+        if conn: conn.rollback()
+        print(f"❌ DB ERROR in add_pet: {e}")
+        return jsonify({"error": f"Database operation failed: {e}"}), 500
     finally:
-        cursor.close()
-        conn.close()
+        if cursor: cursor.close()
+        if conn: conn.close()
+        print("🔌 [DEBUG] Database connection closed")
 
 @pets_bp.route('/<int:pet_id>', methods=['DELETE'])
 def delete_pet(pet_id):
