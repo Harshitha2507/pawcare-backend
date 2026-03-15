@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS pets (
     album TEXT,
     is_favorited BOOLEAN DEFAULT FALSE,
     status VARCHAR(20) DEFAULT 'available', -- 'available' or 'adopted'
+    adoption_fee INT DEFAULT 0,
     lender_id INT, -- Link to user who posted it
     FOREIGN KEY (lender_id) REFERENCES users(id) ON DELETE SET NULL
 );

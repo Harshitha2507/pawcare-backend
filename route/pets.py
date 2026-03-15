@@ -128,6 +128,12 @@ def add_pet():
         except:
             lender_id = None
 
+    adoption_fee_raw = data.get("adoption_fee", "0")
+    try:
+        adoption_fee = int(adoption_fee_raw) if adoption_fee_raw else 0
+    except:
+        adoption_fee = 0
+
     conn = get_db_connection()
     cursor = conn.cursor()
     import json
@@ -137,8 +143,8 @@ def add_pet():
         album_str = json.dumps(album_data) if isinstance(album_data, list) else None
 
         cursor.execute(
-            "INSERT INTO pets (name, category, breed, image, album, location, age, sex, color, health_status, description, lender_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-            (name, category, breed, image_url, album_str, location, age, sex, color, health_status, description, lender_id)
+            "INSERT INTO pets (name, category, breed, image, album, location, age, sex, color, health_status, description, lender_id, adoption_fee) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            (name, category, breed, image_url, album_str, location, age, sex, color, health_status, description, lender_id, adoption_fee)
         )
         conn.commit()
 
